@@ -1,0 +1,126 @@
+<?php
+
+namespace App\Services\Api\V1\Google;
+
+use Google\Client;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use App\DTOs\NearbySearchDTO;
+
+class GoogleMapService
+{
+    protected $geoCodingService;
+
+    protected $directionService;
+
+    protected $cacheDuration;
+
+    public function __construct(protected Client $client)
+    {
+        $this->client = $client;
+        $this->cacheDuration = config('google.cache_duration');
+    }
+
+    /**
+     * Search for places nearby a location.
+     *
+     * @param \App\DTOs\NearbySearchDTO $nearbySearchDTO
+     * @return array
+     */
+    public function nearbySearch(NearbySearchDTO $nearbySearchDTO)
+    {
+        $location = $nearbySearchDTO->lat . ',' . $nearbySearchDTO->lng;
+        $cacheKey = 'nearby_search_' . md5($location);
+
+        return Cache::remember($cacheKey, $this->cacheDuration, function () use ($nearbySearchDTO, $location) {
+            $response = Http::get('https://maps.googleapis.com/maps/api/place/nearbysearch/json', [
+                'location' => $location,
+                'radius' => $nearbySearchDTO->radius, // Default radius in meters
+                'type' => $nearbySearchDTO->type,
+                'keyword' => $nearbySearchDTO->keyword,
+                'key' => config('google.api_key'),
+            ]);
+
+            if ($response->successful()) {
+                return $this->handleResponse($response->json());
+            }
+
+            if ($response->serverError()) {
+                return $this->handleResponse(['status' => 'SERVER_ERROR']);
+            }
+       });
+    }
+
+    /**
+     * Get geocode information for an address.
+     *
+     * @param string $address
+     * @return array
+     */
+    public function geocode($address)
+    {
+        $cacheKey = 'geocode_' . md5($address);
+
+        return Cache::remember($cacheKey, $this->cacheDuration, function () use ($address) {
+            $response = Http::get('https://maps.googleapis.com/maps/api/geocode/json', [
+                'address' => $address,
+                'key' => config('google.api_key')
+            ]);
+
+            if ($response->successful()) {
+                return $this->handleResponse($response->json());
+            }
+
+            if ($response->serverError()) {
+                return $this->handleResponse(['status' => 'SERVER_ERROR']);
+            }
+        });
+    }
+
+    /**
+     * Get directions between two locations.
+     *
+     * @param string $origin
+     * @param string $destination
+     * @param array $options
+     * @return array
+     */
+    public function getDirections($origin, $destination, $options = [])
+    {
+        $cacheKey = 'directions_' . md5($origin . '_' . $destination . '_' . json_encode($options));
+
+        return Cache::remember($cacheKey, $this->cacheDuration, function () use ($origin, $destination, $options) {
+
+            $response = Http::get('https://maps.googleapis.com/maps/api/directions/json', [
+                'origin' => $origin,
+                'destination' => $destination,
+                'key' => config('google.api_key')
+            ]);
+
+            if ($response->successful()) {
+                return $this->handleResponse($response->json());
+            }
+
+            if ($response->serverError()) {
+                return $this->handleResponse(['status' => 'SERVER_ERROR']);
+            }
+        });
+    }
+
+    /**
+     * Handle Google API response.
+     *
+     * @param array $data
+     * @return array
+     */
+    protected function handleResponse($data)
+    {
+        if (isset($data['status']) && $data['status'] != 'OK') {
+            return [
+                'error' => $data['status'],
+                'error_message' => $data['error_message'] ?? 'An error occurred'
+            ];
+        }
+        return $data['results'];
+    }
+}
