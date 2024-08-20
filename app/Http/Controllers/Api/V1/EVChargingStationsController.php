@@ -6,6 +6,7 @@ use App\Http\Requests\Api\V1\NearbyRequest;
 use App\Services\Api\V1\Google\GoogleMapService;
 use Illuminate\Http\Request;
 use App\DTOs\NearbySearchDTO;
+use App\Http\Requests\Api\V1\GetDirectionsRequest;
 
 class EVChargingStationsController extends BaseApiController
 {
@@ -27,8 +28,10 @@ class EVChargingStationsController extends BaseApiController
         return $this->handleGoogleApiResponse($nearbySearches);
     }
 
-    public function getDirections(Request $request)
+    public function getDirections(GetDirectionsRequest $request)
     {
+        $directions = $this->googleMapService->getDirections($request->origin, $request->destination);
 
+        return $this->handleGoogleApiResponse($directions);
     }
 }

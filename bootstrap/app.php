@@ -1,8 +1,11 @@
 <?php
 
+use App\Exceptions\Handler;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Validation\ValidationException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -20,5 +23,23 @@ return Application::configure(basePath: dirname(__DIR__))
         //
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        $exceptions->render(function (ValidationException $exception) {
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'message' => $exception->getMessage(),
+                    'errors' => $exception->errors(),
+                    'status' => \App\Enums\Api\V1\ApiResponseCode::BAD_REQUEST,
+                ], $exception->status);
+            }
+        });
+
+        $exceptions->render(function (NotFoundHttpException $exception) {
+            if (request()->wantsJson()) {
+                return response()->json([
+                    'message' => $exception->getMessage(),
+                    'errors' => [],
+                    'status' => \App\Enums\Api\V1\ApiResponseCode::NOT_FOUND,
+                ], $exception->getStatusCode());
+            }
+        });
     })->create();

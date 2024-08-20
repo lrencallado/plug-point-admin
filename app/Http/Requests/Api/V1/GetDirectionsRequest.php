@@ -4,14 +4,14 @@ namespace App\Http\Requests\Api\V1;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class NearbyRequest extends FormRequest
+class GetDirectionsRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return $this->user()->tokanCan('evcs:nearby-search');
+        return $this->user()->tokenCan('evcs:get-directions');
     }
 
     /**
@@ -22,8 +22,8 @@ class NearbyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lat' => 'required',
-            'lng' => 'required',
+            'origin' => 'required',
+            'destination' => 'required',
         ];
     }
 }

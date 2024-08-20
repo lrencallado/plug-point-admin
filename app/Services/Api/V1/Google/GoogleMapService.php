@@ -82,14 +82,13 @@ class GoogleMapService
      *
      * @param string $origin
      * @param string $destination
-     * @param array $options
      * @return array
      */
-    public function getDirections($origin, $destination, $options = [])
+    public function getDirections($origin, $destination)
     {
-        $cacheKey = 'directions_' . md5($origin . '_' . $destination . '_' . json_encode($options));
+        $cacheKey = 'directions_' . md5($origin . '_' . $destination);
 
-        return Cache::remember($cacheKey, $this->cacheDuration, function () use ($origin, $destination, $options) {
+        return Cache::remember($cacheKey, $this->cacheDuration, function () use ($origin, $destination) {
 
             $response = Http::get('https://maps.googleapis.com/maps/api/directions/json', [
                 'origin' => $origin,
@@ -98,6 +97,7 @@ class GoogleMapService
             ]);
 
             if ($response->successful()) {
+
                 return $this->handleResponse($response->json());
             }
 
@@ -121,6 +121,11 @@ class GoogleMapService
                 'error_message' => $data['error_message'] ?? 'An error occurred'
             ];
         }
-        return $data['results'];
+
+        if (isset($data['results'])) {
+            return $data['results'];
+        }
+
+        return $data;
     }
 }

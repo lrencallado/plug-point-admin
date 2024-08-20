@@ -34,7 +34,8 @@ class JetstreamServiceProvider extends ServiceProvider
         Jetstream::defaultApiTokenPermissions(['read']);
 
         Jetstream::permissions([
-            'evcs:nearbysearch',
+            'evcs:nearby-search',
+            'evcs:get-directions',
         ]);
     }
 }
