@@ -22,6 +22,11 @@ trait ApiResponses
         return $this->error($message, $errors, ApiResponseCode::SERVER_ERROR, 500);
     }
 
+    protected function externalPermissionDenied($message, $errors = []): JsonResponse
+    {
+        return $this->error($message, $errors, ApiResponseCode::PERMISSION_DENIED, 403);
+    }
+
     /**
      * Return a success response with a message and a status.
      *

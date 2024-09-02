@@ -9,4 +9,5 @@ enum ApiResponseCode : String
     case NOT_FOUND = 'NOT_FOUND';
     case SERVER_ERROR = 'SERVER_ERROR';
     case REQUEST_DENIED = 'REQUEST_DENIED';
+    case PERMISSION_DENIED = 'PERMISSION_DENIED';
 }

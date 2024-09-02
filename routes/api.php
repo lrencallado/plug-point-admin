@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\Api\V1\EVChargingStationsController;
+use App\Http\Controllers\Api\V1\ChargingStationsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
@@ -19,9 +19,10 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function () {
         );
     });
 
-    Route::controller(EVChargingStationsController::class)->prefix('evcs')->group(function () {
+    Route::controller(ChargingStationsController::class)->prefix('evcs')->group(function () {
         Route::get('nearby', 'nearby');
         Route::get('get-directions', 'getDirections');
+        Route::get('/', 'index');
     });
 });
 

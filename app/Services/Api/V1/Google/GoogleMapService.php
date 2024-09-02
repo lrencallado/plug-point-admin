@@ -15,14 +15,45 @@ class GoogleMapService
 
     protected $cacheDuration;
 
+    private $key;
+
     public function __construct(protected Client $client)
     {
         $this->client = $client;
         $this->cacheDuration = config('google.cache_duration');
+        $this->key = config('google.api_key');
     }
 
     /**
-     * Search for places nearby a location.
+     * Search for places by text search using new Place API
+     *
+     * @param array $requestData
+     * @param string $fields
+     * @return array
+     */
+    public function textSearchNew($requestData = [], array|string $fields = '*')
+    {
+        $response = Http::withHeaders([
+            'X-Goog-Api-Key' => $this->key,
+            'X-Goog-FieldMask' => $fields,
+        ])
+        ->post('https://places.googleapis.com/v1/places:searchText', $requestData);
+
+        if ($response->successful()) {
+            return $this->handleResponse($response->json());
+        }
+
+        if ($response->clientError()) {
+            return $this->handleResponse($response->json());
+        }
+
+        if ($response->serverError()) {
+            return $this->handleResponse(['status' => 'SERVER_ERROR']);
+        }
+    }
+
+    /**
+     * Search for places nearby a location using Place API (old API)
      *
      * @param \App\DTOs\NearbySearchDTO $nearbySearchDTO
      * @return array
@@ -42,6 +73,10 @@ class GoogleMapService
             ]);
 
             if ($response->successful()) {
+                return $this->handleResponse($response->json());
+            }
+
+            if ($response->clientError()) {
                 return $this->handleResponse($response->json());
             }
 
@@ -68,6 +103,10 @@ class GoogleMapService
             ]);
 
             if ($response->successful()) {
+                return $this->handleResponse($response->json());
+            }
+
+            if ($response->clientError()) {
                 return $this->handleResponse($response->json());
             }
 
@@ -101,6 +140,10 @@ class GoogleMapService
                 return $this->handleResponse($response->json());
             }
 
+            if ($response->clientError()) {
+                return $this->handleResponse($response->json());
+            }
+
             if ($response->serverError()) {
                 return $this->handleResponse(['status' => 'SERVER_ERROR']);
             }
@@ -119,6 +162,11 @@ class GoogleMapService
             return [
                 'error' => $data['status'],
                 'error_message' => $data['error_message'] ?? 'An error occurred'
+            ];
+        } else if (isset($data['error']) && $data['error']['status']) {
+            return [
+                'error' => $data['error']['status'],
+                'error_message' => $data['error']['message'] ?? 'An error occurred'
             ];
         }
 

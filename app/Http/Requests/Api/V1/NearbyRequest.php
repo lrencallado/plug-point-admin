@@ -11,7 +11,7 @@ class NearbyRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return $this->user()->tokanCan('evcs:nearby-search');
+        return $this->user()->tokenCan('evcs:nearby-search');
     }
 
     /**
@@ -22,8 +22,9 @@ class NearbyRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'lat' => 'required',
-            'lng' => 'required',
+            'latitude' => 'required',
+            'longitude' => 'required',
+            'radius' => 'required',
         ];
     }
 }

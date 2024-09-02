@@ -22,6 +22,10 @@ class BaseApiController extends Controller
                 return $this->error($data['error_message'], [], ApiResponseCode::REQUEST_DENIED);
             }
 
+            if ($data['error'] === 'REQUEST_DENIED') {
+                return $this->externalPermissionDenied($data['error_message']);
+            }
+
         }
         return $this->resource($data);
     }
