@@ -5,9 +5,9 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Requests\Api\V1\NearbyRequest;
 use App\Services\Api\V1\Google\GoogleMapService;
 use Illuminate\Http\Request;
-use App\DTOs\NearbySearchDTO;
 use App\Http\Requests\Api\V1\GetDirectionsRequest;
 use App\Models\ChargingStation;
+use App\Services\Api\V1\LocationPointsService;
 
 class ChargingStationsController extends BaseApiController
 {
@@ -26,17 +26,24 @@ class ChargingStationsController extends BaseApiController
         return $this->resource($this->chargingStation->all());
     }
 
-    public function nearby(NearbyRequest $request, NearbySearchDTO $nearbySearchDTO)
+    public function nearby(NearbyRequest $request, LocationPointsService $locationPointsService, ChargingStation $chargingStation)
     {
-        $nearbySearchDTO->lat = $request->lat;
-        $nearbySearchDTO->lng = $request->lng;
-        $nearbySearchDTO->radius = 100500;
-        $nearbySearchDTO->type = 'charging_station';
-        $nearbySearchDTO->keyword = 'Electric Car Vehicle Charging station in CEBU';
+        $locationWithinRadius = [];
+        $otherStations = [];
 
-        $nearbySearches = $this->googleMapService->nearbySearch($nearbySearchDTO);
+        // Loop through the list of coordinations and check if each coordinate
+        // is within the specified radius from the center point.
+        foreach ($chargingStation->all() as $station) {
+            $distance = $locationPointsService->haversineDistance($request->latitude, $request->longitude, $station->location['latitude'], $station->location['longitude']);
 
-        return $this->handleGoogleApiResponse($nearbySearches);
+            if ($distance <= $request->radius) {
+                $locationWithinRadius[] = $station;
+            } else {
+                $otherStations[] = $station;
+            }
+        }
+
+        return $this->resource(['nearby' => $locationWithinRadius, 'other' => $otherStations]);
     }
 
     public function getDirections(GetDirectionsRequest $request)
