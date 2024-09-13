@@ -18,7 +18,6 @@ class ChargingStationsController extends BaseApiController
     {
         $this->googleMapService = $googleMapService;
         $this->chargingStation = $chargingStation;
-
     }
 
     public function index(Request $request)
@@ -31,8 +30,10 @@ class ChargingStationsController extends BaseApiController
         $locationWithinRadius = [];
         $otherStations = [];
 
-        // Loop through the list of coordinations and check if each coordinate
-        // is within the specified radius from the center point.
+        /**
+         * Loop through the list of coordinations and check if each coordinate
+         * is within the specified radius from the center point.
+         */
         foreach ($chargingStation->all() as $station) {
             $distance = $locationPointsService->haversineDistance($request->latitude, $request->longitude, $station->location['latitude'], $station->location['longitude']);
 
